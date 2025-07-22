@@ -211,5 +211,7 @@ __marimo__/
 /json/
 /pdf/
 /csv/
+/plots/
+
 
 pdf_test.py
