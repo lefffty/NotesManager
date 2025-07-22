@@ -208,5 +208,8 @@ __marimo__/
 
 /backups/
 /notes/
+/json/
+/pdf/
+/csv/
 
 pdf_test.py

@@ -5,9 +5,13 @@ import csv
 import datetime
 import platform
 import shutil
+import logging
+import matplotlib.pyplot as plt
 from enum import Enum
 from collections import defaultdict
 from send2trash import send2trash
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
 
 
 NOTES_DIR = 'notes'
@@ -17,6 +21,7 @@ JSON_DIR = 'json'
 PDF_DIR = 'pdf'
 ACTIONS_FILE = 'actions.txt'
 TXT_EXTENSION = '.txt'
+PLOTS_DIR = 'plots'
 
 
 class Actions(Enum):
@@ -34,6 +39,20 @@ def ensure_directory_exists() -> None:
     os.makedirs(CSV_DIR, exist_ok=True)
     os.makedirs(JSON_DIR, exist_ok=True)
     os.makedirs(PDF_DIR, exist_ok=True)
+    os.makedirs(PLOTS_DIR, exist_ok=True)
+
+
+def setup_logging():
+    logging.basicConfig(
+        filename='logs/basic_logging.log',
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S',
+    )
+
+
+def log_note_action(action, note_title):
+    logging.info(f'Action: {action} | Note: {note_title}')
 
 
 def list_notes() -> None:
@@ -92,7 +111,7 @@ def create_note():
     with open(filename, 'w') as file:
         file.write(content)
 
-    print(f'  Note "{title}" was created!')
+    log_note_action(Actions.CREATE, title)
 
 
 def update_note() -> None:
@@ -114,7 +133,7 @@ def update_note() -> None:
             os.rename(old_filename, new_filename)
             with open(new_filename, 'w') as file:
                 file.write(new_content)
-            print(f'  File {notes[note_num - 1]} was successfully updated!')
+            log_note_action(Actions.UPDATE, new_title)
     except ValueError:
         print('  Entered number is not integer!')
 
@@ -132,7 +151,7 @@ def delete_note() -> None:
         if 1 <= note_num <= len(notes):
             filename = os.path.join(NOTES_DIR, notes[note_num - 1])
             os.remove(filename)
-            print(f'  {filename} was deleted!')
+            log_note_action(Actions.DELETE.name, notes[note_num - 1])
     except ValueError:
         print('  Entered number is not integer!')
 
@@ -235,14 +254,69 @@ def export_to_json():
     print('  Notes was exported into JSON')
 
 
+def words_frequency(buffer: str) -> defaultdict[str, int]:
+    words_dict: defaultdict[str, int] = defaultdict(int)
+    words = buffer.split(' ')
+    for word in words:
+        words_dict[word] += 1
+    return words_dict
+
+
+def semantic_analysis():
+    list_notes()
+    note_number = input('  Enter number of note you want to analyze: ')
+
+    try:
+        note_num = int(note_number)
+        notes = [f for f in os.listdir(NOTES_DIR) if f.endswith(TXT_EXTENSION)]
+        if 1 <= note_num <= len(notes):
+            full_path = os.path.join(NOTES_DIR, notes[note_num - 1])
+            title = notes[note_num - 1].removesuffix(TXT_EXTENSION)
+            with open(full_path, 'r') as file:
+                content = file.read()
+                words_freq = words_frequency(content)
+                plt.bar(words_freq.keys(), words_freq.values())
+                plt.title(f'{title} analysis')
+                plt.figure(figsize=(200, 100))
+                plt.ylabel('Количество вхождений')
+                plt.xlabel('Слово')
+                filename = os.path.join(PLOTS_DIR, f'{title} analysis.png')
+                plt.savefig(filename)
+                pdf_filename = os.path.join(
+                    PDF_DIR, f'{title}_semantic_analysis.pdf')
+                canv = canvas.Canvas(pdf_filename, pagesize=A4)
+                canv.drawImage(filename, 100, 500, width=500, height=350)
+                canv.save()
+        else:
+            print(f'  Your number should be in range ({1}, {len(notes)})')
+    except ValueError:
+        print('  Your number should be integer!')
+
+
 def export_to_pdf():
     timestamp = datetime.datetime.now().date()
     filename = os.path.join(PDF_DIR, f'{timestamp}.pdf')
-    pass
+    canv = canvas.Canvas(filename, pagesize=A4)
+
+    notes = [f for f in os.listdir(NOTES_DIR) if f.endswith('.txt')]
+
+    x = 15
+    y = 780
+    dy = 40
+    for note in notes:
+        with open(os.path.join(NOTES_DIR, note)) as file:
+            title = note.removesuffix(TXT_EXTENSION)
+            content = file.read()
+        canv.drawString(x, y, text=f'Title: {title}')
+        canv.drawString(x, y+dy, text=f'Content: {content}')
+        y += dy
+
+    canv.save()
 
 
 def main():
     ensure_directory_exists()
+    setup_logging()
     while True:
         print('1 - list of notes')
         print('2 - search note by keyword')
@@ -254,7 +328,9 @@ def main():
         print('8 - delete old backups')
         print('9 - export to JSON')
         print('10 - export to CSV')
-        print('11 - EXIT')
+        print('11 - export to PDF')
+        print('12 - note semantic analysis')
+        print('13 - EXIT')
 
         choice = (input('Enter your choice: '))
         try:
@@ -286,6 +362,8 @@ def main():
             case 11:
                 export_to_pdf()
             case 12:
+                semantic_analysis()
+            case 13:
                 break
     print('Program has finished!')
 
