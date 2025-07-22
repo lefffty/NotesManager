@@ -19,6 +19,8 @@ def ensure_directory_exists() -> None:
     """
     os.makedirs(NOTES_DIR, exist_ok=True)
     os.makedirs(BACKUP_DIR, exist_ok=True)
+    os.makedirs(CSV_DIR, exist_ok=True)
+    os.makedirs(JSON_DIR, exist_ok=True)
 
 
 def list_notes() -> None:
@@ -137,7 +139,11 @@ def create_backup() -> None:
 
 
 def delete_old_backups() -> None:
+    """
+    Deleting old backups
+    """
     now = datetime.datetime.now().date()
+
     for file in os.listdir(BACKUP_DIR):
         full_path = os.path.join(BACKUP_DIR, file)
         creation_time = os.path.getctime(full_path)
@@ -145,8 +151,13 @@ def delete_old_backups() -> None:
         if (now - creation_date).days >= 1:
             os.remove(full_path)
 
+    print('  Old backups was deleted!')
+
 
 def export_to_csv():
+    """
+    Exporting notes info CSV
+    """
     timestamp = datetime.datetime.now().date()
     FILENAME = os.path.join(CSV_DIR, f'{timestamp}.csv')
 
@@ -165,9 +176,26 @@ def export_to_csv():
         for note in notes:
             writer.writerow(note)
 
+    print('  Notes was exported into CSV')
+
 
 def export_to_json():
-    pass
+    """
+    Exporting notes info JSON
+    """
+    timestamp = datetime.datetime.now().date()
+    FILENAME = os.path.join(JSON_DIR, f'{timestamp}.json')
+
+    notes = defaultdict(str)
+    for _file in os.listdir(NOTES_DIR):
+        if _file.endswith(TXT_EXTENSION):
+            with open(os.path.join(NOTES_DIR, _file), 'r') as file:
+                notes[_file] = file.read()
+
+    with open(FILENAME, 'w') as json_file:
+        json.dump(notes, json_file, indent=4, ensure_ascii=False)
+
+    print('  Notes was exported into JSON')
 
 
 def main():
