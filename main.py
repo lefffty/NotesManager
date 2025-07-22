@@ -1,13 +1,15 @@
 import os
-import time
-# import json
+import json
 import zipfile
-# import csv
+import csv
 import datetime
+from collections import defaultdict
 
 
 NOTES_DIR = 'notes'
 BACKUP_DIR = 'backups'
+CSV_DIR = 'csv'
+JSON_DIR = 'json'
 TXT_EXTENSION = '.txt'
 
 
@@ -23,7 +25,7 @@ def list_notes() -> None:
     """
     List of notes
     """
-    notes = sorted([f for f in os.listdir(NOTES_DIR)
+    notes = sorted([f.lower() for f in os.listdir(NOTES_DIR)
                    if f.endswith(TXT_EXTENSION)], key=str.__len__, reverse=True)
     if not notes:
         print('There is no saved notes')
@@ -145,7 +147,23 @@ def delete_old_backups() -> None:
 
 
 def export_to_csv():
-    pass
+    timestamp = datetime.datetime.now().date()
+    FILENAME = os.path.join(CSV_DIR, f'{timestamp}.csv')
+
+    notes = []
+    for _file in os.listdir(NOTES_DIR):
+        if _file.endswith(TXT_EXTENSION):
+            full_path = os.path.join(NOTES_DIR, _file)
+            with open(full_path, 'r') as file:
+                note_dict = defaultdict(str)
+                note_dict['title'] = _file
+                note_dict['content'] = file.read()
+            notes.append(note_dict)
+
+    with open(FILENAME, 'w') as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=['title', 'content'])
+        for note in notes:
+            writer.writerow(note)
 
 
 def export_to_json():
