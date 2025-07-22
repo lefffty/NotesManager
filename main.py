@@ -3,14 +3,26 @@ import json
 import zipfile
 import csv
 import datetime
+import platform
+import shutil
+from enum import Enum
 from collections import defaultdict
+from send2trash import send2trash
 
 
 NOTES_DIR = 'notes'
 BACKUP_DIR = 'backups'
 CSV_DIR = 'csv'
 JSON_DIR = 'json'
+PDF_DIR = 'pdf'
+ACTIONS_FILE = 'actions.txt'
 TXT_EXTENSION = '.txt'
+
+
+class Actions(Enum):
+    CREATE = 1
+    UPDATE = 2
+    DELETE = 3
 
 
 def ensure_directory_exists() -> None:
@@ -21,14 +33,18 @@ def ensure_directory_exists() -> None:
     os.makedirs(BACKUP_DIR, exist_ok=True)
     os.makedirs(CSV_DIR, exist_ok=True)
     os.makedirs(JSON_DIR, exist_ok=True)
+    os.makedirs(PDF_DIR, exist_ok=True)
 
 
 def list_notes() -> None:
     """
     List of notes
     """
-    notes = sorted([f.lower() for f in os.listdir(NOTES_DIR)
-                   if f.endswith(TXT_EXTENSION)], key=str.__len__, reverse=True)
+    notes = sorted(
+        [f.lower() for f in os.listdir(NOTES_DIR) if f.endswith(TXT_EXTENSION)],
+        key=str.__len__,
+        reverse=True
+    )
     if not notes:
         print('There is no saved notes')
     else:
@@ -45,18 +61,16 @@ def search_note_by_keyword() -> None:
     """
     keyword: str = input('  Enter keyword: ').lower()
     found: bool = False
-    max_words = 25
 
     for note in os.listdir(NOTES_DIR):
         if note.endswith(TXT_EXTENSION):
-            with open(note, 'r') as file:
+            with open(os.path.join(NOTES_DIR, note), 'r') as file:
                 text = ''.join([line.lower() for line in file.readlines()])
                 if keyword in text:
-                    content = text.split()
                     print(
                         (f'  Keyword "{keyword}" was found in '
-                         f'{note.removesuffix(TXT_EXTENSION)}" note'))
-                    print(content[:max_words])
+                         f'"{note.removesuffix(TXT_EXTENSION)}" '
+                         f'note: {text.count(keyword.lower())}'))
                     found = True
 
     if not found:
@@ -121,6 +135,29 @@ def delete_note() -> None:
             print(f'  {filename} was deleted!')
     except ValueError:
         print('  Entered number is not integer!')
+
+
+def send_note_to_trash():
+    list_notes()
+
+    note_number = input('  Enter note number: ')
+
+    try:
+        note_num = int(note_number)
+        notes = [f for f in os.listdir(NOTES_DIR) if f.endswith(TXT_EXTENSION)]
+        if 1 <= note_num <= len(notes):
+            filename = os.path.join(NOTES_DIR, notes[note_num - 1])
+            if platform.system() == 'Windows':
+                send2trash(filename)
+            else:
+                trash_path = os.path.expanduser("~/.local/share/Trash/files/")
+                os.makedirs(trash_path, exist_ok=True)
+                shutil.move(filename, trash_path)
+            print(f'  {filename} was sent to trash!')
+        else:
+            print(f'Note number should be in ({1}, {len(notes)})')
+    except ValueError:
+        print('Note number should be integer!')
 
 
 def create_backup() -> None:
@@ -198,19 +235,26 @@ def export_to_json():
     print('  Notes was exported into JSON')
 
 
+def export_to_pdf():
+    timestamp = datetime.datetime.now().date()
+    filename = os.path.join(PDF_DIR, f'{timestamp}.pdf')
+    pass
+
+
 def main():
     ensure_directory_exists()
     while True:
         print('1 - list of notes')
         print('2 - search note by keyword')
         print('3 - create note')
-        print('4 - delete note')
-        print('5 - update note')
-        print('6 - create new backup')
-        print('7 - delete old backups')
-        print('8 - export to JSON')
-        print('9 - export to CSV')
-        print('10 - EXIT')
+        print('4 - delete note permanently')
+        print('5 - send note to trash')
+        print('6 - update note')
+        print('7 - create new backup')
+        print('8 - delete old backups')
+        print('9 - export to JSON')
+        print('10 - export to CSV')
+        print('11 - EXIT')
 
         choice = (input('Enter your choice: '))
         try:
@@ -228,16 +272,20 @@ def main():
             case 4:
                 delete_note()
             case 5:
-                update_note()
+                send_note_to_trash()
             case 6:
-                create_backup()
+                update_note()
             case 7:
-                delete_old_backups()
+                create_backup()
             case 8:
-                export_to_json()
+                delete_old_backups()
             case 9:
-                export_to_csv()
+                export_to_json()
             case 10:
+                export_to_csv()
+            case 11:
+                export_to_pdf()
+            case 12:
                 break
     print('Program has finished!')
 
