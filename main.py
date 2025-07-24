@@ -59,12 +59,8 @@ def list_notes() -> None:
     """
     List of notes
     """
-    notes = sorted(
-        [f.lower() for f in os.listdir(NOTES_DIR)
-            if f.endswith(TXT_EXTENSION)],
-        key=str.__len__,
-        reverse=True
-    )
+    notes = [f.lower() for f in os.listdir(NOTES_DIR)
+             if f.endswith(TXT_EXTENSION)]
     if not notes:
         print('There is no saved notes')
     else:
@@ -275,19 +271,9 @@ def semantic_analysis():
             title = notes[note_num - 1].removesuffix(TXT_EXTENSION)
             with open(full_path, 'r') as file:
                 content = file.read()
-                words_freq = words_frequency(content)
-                plt.bar(words_freq.keys(), words_freq.values())
-                plt.title(f'{title} analysis')
-                plt.figure(figsize=(200, 100))
-                plt.ylabel('Количество вхождений')
-                plt.xlabel('Слово')
-                filename = os.path.join(PLOTS_DIR, f'{title} analysis.png')
-                plt.savefig(filename)
-                pdf_filename = os.path.join(
-                    PDF_DIR, f'{title}_semantic_analysis.pdf')
-                canv = canvas.Canvas(pdf_filename, pagesize=A4)
-                canv.drawImage(filename, 100, 500, width=500, height=350)
-                canv.save()
+            print(content)
+            words_freq = words_frequency(content)
+            return words_freq, title
         else:
             print(f'  Your number should be in range ({1}, {len(notes)})')
     except ValueError:
@@ -325,6 +311,16 @@ def statistics_by_date() -> Counter:
         dates.append(str(creation_date))
     counter = Counter(dates)
     return counter
+
+
+def plot_semantic_analysis():
+    words_freq, title = semantic_analysis()
+    plt.figure(figsize=(200, 100))
+    plt.bar(words_freq.keys(), words_freq.values())
+    plt.title(f'{title} analysis')
+    plt.ylabel('Количество вхождений')
+    plt.xlabel('Слово')
+    plt.show()
 
 
 def plot_user_statistics():
@@ -388,7 +384,7 @@ def main():
             case 11:
                 export_to_pdf()
             case 12:
-                semantic_analysis()
+                plot_semantic_analysis()
             case 13:
                 plot_user_statistics()
             case 14:
