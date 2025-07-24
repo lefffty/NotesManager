@@ -6,6 +6,7 @@ import datetime
 import platform
 import shutil
 import logging
+import keyboard
 import matplotlib.pyplot as plt
 from enum import Enum
 from collections import defaultdict, Counter
@@ -71,6 +72,27 @@ def list_notes() -> None:
         print('===================')
 
 
+def open_note():
+    list_notes()
+    note_number = input('  Enter note number: ')
+
+    try:
+        note_num = int(note_number)
+        notes = [f for f in os.listdir(NOTES_DIR) if f.endswith(TXT_EXTENSION)]
+        if 1 <= note_num <= len(notes):
+            path = os.path.join(NOTES_DIR, notes[note_num - 1])
+            with open(path, 'r') as file:
+                title = notes[note_num - 1]
+                content = file.read()
+            print(f'\tNote title: {title}')
+            print(f'\tNote content: {content}')
+            keyboard.wait('esc')
+        else:
+            print(f'  Note number should be in ({1}, {len(notes)})')
+    except ValueError:
+        print('  Entered number is not integer!')
+
+
 def search_note_by_keyword() -> None:
     """
     To search note by entered keyword
@@ -131,6 +153,8 @@ def update_note() -> None:
             with open(new_filename, 'w') as file:
                 file.write(new_content)
             log_note_action(Actions.UPDATE, new_title)
+        else:
+            print(f'Note number should be in ({1}, {len(notes)})')
     except ValueError:
         print('  Entered number is not integer!')
 
@@ -149,6 +173,8 @@ def delete_note() -> None:
             filename = os.path.join(NOTES_DIR, notes[note_num - 1])
             os.remove(filename)
             log_note_action(Actions.DELETE.name, notes[note_num - 1])
+        else:
+            print(f'Note number should be in ({1}, {len(notes)})')
     except ValueError:
         print('  Entered number is not integer!')
 
@@ -335,24 +361,23 @@ def plot_user_statistics():
     plt.show()
 
 
-def main():
-    ensure_directory_exists()
-    setup_logging()
+def main_loop():
     while True:
         print('1 - list of notes')
         print('2 - search note by keyword')
         print('3 - create note')
-        print('4 - delete note permanently')
-        print('5 - send note to trash')
-        print('6 - update note')
-        print('7 - create new backup')
-        print('8 - delete old backups')
-        print('9 - export to JSON')
-        print('10 - export to CSV')
-        print('11 - export to PDF')
-        print('12 - note semantic analysis')
-        print('13 - activity diagram')
-        print('14 - EXIT')
+        print('4 - open note')
+        print('5 - delete note permanently')
+        print('6 - send note to trash')
+        print('7 - update note')
+        print('8 - create new backup')
+        print('9 - delete old backups')
+        print('10 - export to JSON')
+        print('11 - export to CSV')
+        print('12 - export to PDF')
+        print('13 - note semantic analysis')
+        print('14 - activity diagram')
+        print('15 - EXIT')
 
         choice = (input('Enter your choice: '))
         try:
@@ -368,28 +393,36 @@ def main():
             case 3:
                 create_note()
             case 4:
-                delete_note()
+                open_note()
             case 5:
-                send_note_to_trash()
+                delete_note()
             case 6:
-                update_note()
+                send_note_to_trash()
             case 7:
-                create_backup()
+                update_note()
             case 8:
-                delete_old_backups()
+                create_backup()
             case 9:
-                export_to_json()
+                delete_old_backups()
             case 10:
-                export_to_csv()
+                export_to_json()
             case 11:
-                export_to_pdf()
+                export_to_csv()
             case 12:
-                plot_semantic_analysis()
+                export_to_pdf()
             case 13:
-                plot_user_statistics()
+                plot_semantic_analysis()
             case 14:
+                plot_user_statistics()
+            case 15:
                 break
     print('Program has finished!')
+
+
+def main():
+    ensure_directory_exists()
+    setup_logging()
+    main_loop()
 
 
 if __name__ == '__main__':
