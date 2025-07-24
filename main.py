@@ -8,7 +8,7 @@ import shutil
 import logging
 import matplotlib.pyplot as plt
 from enum import Enum
-from collections import defaultdict
+from collections import defaultdict, Counter
 from send2trash import send2trash
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
@@ -60,7 +60,8 @@ def list_notes() -> None:
     List of notes
     """
     notes = sorted(
-        [f.lower() for f in os.listdir(NOTES_DIR) if f.endswith(TXT_EXTENSION)],
+        [f.lower() for f in os.listdir(NOTES_DIR)
+            if f.endswith(TXT_EXTENSION)],
         key=str.__len__,
         reverse=True
     )
@@ -314,6 +315,30 @@ def export_to_pdf():
     canv.save()
 
 
+def statistics_by_date() -> Counter:
+    notes = [f for f in os.listdir(NOTES_DIR) if f.endswith(TXT_EXTENSION)]
+    dates = []
+    for note in notes:
+        path = os.path.join(NOTES_DIR, note)
+        creation_date = datetime.datetime.fromtimestamp(
+            os.path.getctime(path)).date()
+        dates.append(str(creation_date))
+    counter = Counter(dates)
+    return counter
+
+
+def plot_user_statistics():
+    statistics = statistics_by_date()
+    TITLE = 'User activity'
+    XLABEL = 'Date'
+    YLABEL = 'Created notes'
+    plt.bar(statistics.keys(), statistics.values())
+    plt.title(TITLE)
+    plt.xlabel(XLABEL)
+    plt.ylabel(YLABEL)
+    plt.show()
+
+
 def main():
     ensure_directory_exists()
     setup_logging()
@@ -330,7 +355,8 @@ def main():
         print('10 - export to CSV')
         print('11 - export to PDF')
         print('12 - note semantic analysis')
-        print('13 - EXIT')
+        print('13 - activity diagram')
+        print('14 - EXIT')
 
         choice = (input('Enter your choice: '))
         try:
@@ -364,6 +390,8 @@ def main():
             case 12:
                 semantic_analysis()
             case 13:
+                plot_user_statistics()
+            case 14:
                 break
     print('Program has finished!')
 
