@@ -45,3 +45,19 @@
 10. `matplotlib.pyplot` - для отрисовки графиков
 11. `send2trash` - модуль для отправки файла в корзину
 12. `reportlab` - модуль для работы с `pdf`
+
+## Запуск проекта
+
+Склонируйте данный git репозиторий к себе на компьютер с помощью следующей команды:
+    ``https://github.com/lefffty/NotesManager.git``
+
+Создайте виртуальное окружение: 
+``python -m venv venv``
+
+Активируйте виртуальное окружение:
+``source venv/Scripts/activate``
+
+Установите зависимости:
+``pip install -r requirements.txt``
+
+Пользуйтесь!
