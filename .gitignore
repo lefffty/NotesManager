@@ -206,12 +206,9 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-/backups/
-/notes/
-/json/
-/pdf/
-/csv/
-/plots/
-
-
-pdf_test.py
+backups/
+notes/
+json/
+pdf/
+csv/
+plots/
