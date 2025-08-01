@@ -10,6 +10,7 @@ import keyboard
 import matplotlib.pyplot as plt
 from enum import Enum
 from collections import defaultdict, Counter
+from _collections_abc import MutableMapping
 from send2trash import send2trash
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
@@ -33,7 +34,7 @@ class Actions(Enum):
 
 def ensure_directory_exists() -> None:
     """
-    To check dirs
+    Checking directories
     """
     os.makedirs(NOTES_DIR, exist_ok=True)
     os.makedirs(BACKUP_DIR, exist_ok=True)
@@ -43,7 +44,10 @@ def ensure_directory_exists() -> None:
     os.makedirs(PLOTS_DIR, exist_ok=True)
 
 
-def setup_logging():
+def setup_logging() -> None:
+    """
+    Setting up logging
+    """
     logging.basicConfig(
         filename='logs/basic_logging.log',
         level=logging.INFO,
@@ -52,13 +56,24 @@ def setup_logging():
     )
 
 
-def log_note_action(action, note_title):
+def log_note_action(action, note_title) -> None:
+    """
+    Function that logs user actions, such as creation of note,
+    updation of note, deletion of note.
+
+    Parameters
+    ------------
+    action : Actions
+        Type of user action
+    note_title : str
+        Note`s title
+    """
     logging.info(f'Action: {action} | Note: {note_title}')
 
 
 def list_notes() -> None:
     """
-    List of notes
+    List of available notes
     """
     notes = [f.lower() for f in os.listdir(NOTES_DIR)
              if f.endswith(TXT_EXTENSION)]
@@ -72,7 +87,15 @@ def list_notes() -> None:
         print('===================')
 
 
-def open_note():
+def open_note() -> None:
+    """
+    Function that allows user to choose number of note which he wants to open
+
+    Raises
+    -------------
+    ValueError
+        If `note_number` cannot be converted into int
+    """
     list_notes()
     note_number = input('  Enter note number: ')
 
@@ -115,9 +138,9 @@ def search_note_by_keyword() -> None:
         print('There is no notes which includes entered keyword!')
 
 
-def create_note():
+def create_note() -> None:
     """
-    Создание новой заметки
+    Creation of new note
     """
     title = input('  Enter note title: ')
     content = input('  Enter note content: ')
@@ -135,7 +158,12 @@ def create_note():
 
 def update_note() -> None:
     """
-    Update note
+    Update note which was chosen by user.
+
+    Raises
+    -------------
+    ValueError
+        If `note_number` cannot be converted into `int`
     """
     list_notes()
     note_number = input('  Enter note number: ')
@@ -161,7 +189,12 @@ def update_note() -> None:
 
 def delete_note() -> None:
     """
-    To delete note
+    Removing note which was chosen by user.
+
+    Raises
+    -------------
+    ValueError
+        If `note_number` cannot be converted into int
     """
     list_notes()
     note_number = input('  Enter note number: ')
@@ -179,7 +212,15 @@ def delete_note() -> None:
         print('  Entered number is not integer!')
 
 
-def send_note_to_trash():
+def send_note_to_trash() -> None:
+    """
+    Sending note to trash.
+
+    Raises
+    -------------
+    ValueError
+        If `note_number` cannot be converted into int
+    """
     list_notes()
 
     note_number = input('  Enter note number: ')
@@ -233,7 +274,7 @@ def delete_old_backups() -> None:
     print('  Old backups was deleted!')
 
 
-def export_to_csv():
+def export_to_csv() -> None:
     """
     Exporting notes info CSV
     """
@@ -258,7 +299,7 @@ def export_to_csv():
     print('  Notes was exported into CSV')
 
 
-def export_to_json():
+def export_to_json() -> None:
     """
     Exporting notes info JSON
     """
@@ -277,7 +318,20 @@ def export_to_json():
     print('  Notes was exported into JSON')
 
 
-def words_frequency(buffer: str) -> defaultdict[str, int]:
+def words_frequency(buffer: str) -> MutableMapping[str, int]:
+    """
+    Created words frequency dictionary
+
+    Parameters
+    ------------
+    buffer : str
+        Note`s content
+
+    Returns
+    ------------
+    words_dict : MutableMapping[str, int]
+        Words frequency dictionary
+    """
     words_dict: defaultdict[str, int] = defaultdict(int)
     words = buffer.split(' ')
     for word in words:
@@ -286,6 +340,21 @@ def words_frequency(buffer: str) -> defaultdict[str, int]:
 
 
 def semantic_analysis():
+    """
+    Creates semantic analysis of chosen note
+
+    Returns
+    ------------
+    words_freq : MutableMapping[str, int]
+        Map which contains word frequency for chosen note
+    title : str
+        Title of note
+
+    Raises
+    ------------
+    ValueError
+        If `note_number` cannot be convert into `int`
+    """
     list_notes()
     note_number = input('  Enter number of note you want to analyze: ')
 
@@ -297,7 +366,6 @@ def semantic_analysis():
             title = notes[note_num - 1].removesuffix(TXT_EXTENSION)
             with open(full_path, 'r') as file:
                 content = file.read()
-            print(content)
             words_freq = words_frequency(content)
             return words_freq, title
         else:
@@ -306,7 +374,10 @@ def semantic_analysis():
         print('  Your number should be integer!')
 
 
-def export_to_pdf():
+def export_to_pdf() -> None:
+    """
+    Converts notes to pdf
+    """
     timestamp = datetime.datetime.now().date()
     filename = os.path.join(PDF_DIR, f'{timestamp}.pdf')
     canv = canvas.Canvas(filename, pagesize=A4)
@@ -328,6 +399,14 @@ def export_to_pdf():
 
 
 def statistics_by_date() -> Counter:
+    """
+    Creates dictionary of user activity
+
+    Returns
+    ------------
+    counter : Counter
+        User activity dictionary
+    """
     notes = [f for f in os.listdir(NOTES_DIR) if f.endswith(TXT_EXTENSION)]
     dates = []
     for note in notes:
@@ -339,7 +418,10 @@ def statistics_by_date() -> Counter:
     return counter
 
 
-def plot_semantic_analysis():
+def plot_semantic_analysis() -> None:
+    """
+    Plots note`s semantic analysis
+    """
     words_freq, title = semantic_analysis()
     plt.figure(figsize=(200, 100))
     plt.bar(words_freq.keys(), words_freq.values())
@@ -349,7 +431,10 @@ def plot_semantic_analysis():
     plt.show()
 
 
-def plot_user_statistics():
+def plot_user_statistics() -> None:
+    """
+    Plots user activity statictics
+    """
     statistics = statistics_by_date()
     TITLE = 'User activity'
     XLABEL = 'Date'
@@ -361,7 +446,10 @@ def plot_user_statistics():
     plt.show()
 
 
-def main_loop():
+def main_loop() -> None:
+    """
+    Main program loop
+    """
     while True:
         print('1 - list of notes')
         print('2 - search note by keyword')
@@ -381,11 +469,11 @@ def main_loop():
 
         choice = (input('Enter your choice: '))
         try:
-            choice = int(choice)
+            _choice = int(choice)
         except ValueError:
             print('Your choice should be integer!')
 
-        match choice:
+        match _choice:
             case 1:
                 list_notes()
             case 2:
