@@ -13,3 +13,20 @@ python-dateutil==2.9.0.post0
 reportlab==4.4.2
 Send2Trash==1.8.3
 six==1.17.0
+
+# import os
+# import json
+# import zipfile
+# import csv
+# import datetime
+# import platform
+# import shutil
+# import logging
+# import keyboard
+# import matplotlib.pyplot as plt
+# from enum import Enum
+# from collections import defaultdict, Counter
+# from _collections_abc import MutableMapping
+# from send2trash import send2trash
+# from reportlab.pdfgen import canvas
+# from reportlab.lib.pagesizes import A4
